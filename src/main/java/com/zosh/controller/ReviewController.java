@@ -1,6 +1,5 @@
 package com.zosh.controller;
 
-
 import com.zosh.exception.UserException;
 import com.zosh.mapper.ReviewMapper;
 import com.zosh.modal.Review;
@@ -35,17 +34,15 @@ public class ReviewController {
 
         List<Review> reviews = reviewService.getReviewsBySalonId(salonId);
 
-        List<ReviewDTO> reviewDTOS =  reviews.stream().map((review)->
-                {
-                    UserDTO user= null;
-                    try {
-                        user = userService.getUserById(review.getUserId()).getBody();
-                    } catch (UserException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return ReviewMapper.mapToDTO(review,user);
-                }
-        ).toList();
+        List<ReviewDTO> reviewDTOS = reviews.stream().map((review) -> {
+            UserDTO user = null;
+            try {
+                user = userService.getUserById(review.getUserId()).getBody();
+            } catch (UserException e) {
+                throw new RuntimeException(e);
+            }
+            return ReviewMapper.mapToDTO(review, user);
+        }).toList();
 
         return ResponseEntity.ok(reviewDTOS);
 
@@ -60,15 +57,12 @@ public class ReviewController {
         UserDTO user = userService.getUserFromJwtToken(jwt).getBody();
         SalonDTO product = salonService.getSalonById(salonId).getBody();
 
-
         Review review = reviewService.createReview(
-                req, user, product
-        );
+                req, user, product);
         UserDTO reviewer = userService.getUserById(
-                review.getUserId()
-        ).getBody();
+                review.getUserId()).getBody();
 
-        ReviewDTO reviewDTO= ReviewMapper.mapToDTO(review,reviewer);
+        ReviewDTO reviewDTO = ReviewMapper.mapToDTO(review, reviewer);
 
         return ResponseEntity.ok(reviewDTO);
 
@@ -87,8 +81,7 @@ public class ReviewController {
                 reviewId,
                 req.getReviewText(),
                 req.getReviewRating(),
-                user.getId()
-        );
+                user.getId());
         return ResponseEntity.ok(review);
 
     }
@@ -96,14 +89,12 @@ public class ReviewController {
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<ApiResponse> deleteReview(
             @PathVariable Long reviewId,
-            @RequestHeader("Authorization") String jwt) throws Exception
-            {
+            @RequestHeader("Authorization") String jwt) throws Exception {
 
         UserDTO user = userService.getUserFromJwtToken(jwt).getBody();
 
         reviewService.deleteReview(reviewId, user.getId());
         ApiResponse res = new ApiResponse("Review deleted successfully");
-
 
         return ResponseEntity.ok(res);
 
