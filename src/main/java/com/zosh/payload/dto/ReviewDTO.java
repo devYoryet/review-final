@@ -14,6 +14,7 @@ public class ReviewDTO {
     private UserDTO user;
 
     private SalonDTO salon;
+    private Long salonId; // ✅ AGREGAR salonId también
 
     private String reviewText;
 

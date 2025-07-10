@@ -28,44 +28,38 @@ public class ReviewController {
     private final UserFeignClient userService;
     private final SalonFeignClient salonService;
 
-    @GetMapping("/salon/{salonId}")
-    public ResponseEntity<List<ReviewDTO>> getReviewsByProductId(
-            @PathVariable Long salonId) {
-
-        List<Review> reviews = reviewService.getReviewsBySalonId(salonId);
-
-        List<ReviewDTO> reviewDTOS = reviews.stream().map((review) -> {
-            UserDTO user = null;
-            try {
-                user = userService.getUserById(review.getUserId()).getBody();
-            } catch (UserException e) {
-                throw new RuntimeException(e);
-            }
-            return ReviewMapper.mapToDTO(review, user);
-        }).toList();
-
-        return ResponseEntity.ok(reviewDTOS);
-
-    }
-
     @PostMapping("/salon/{salonId}")
     public ResponseEntity<ReviewDTO> writeReview(
             @RequestBody CreateReviewRequest req,
             @PathVariable Long salonId,
             @RequestHeader("Authorization") String jwt) throws Exception {
 
-        UserDTO user = userService.getUserFromJwtToken(jwt).getBody();
-        SalonDTO product = salonService.getSalonById(salonId).getBody();
+        System.out.println("🔍 REVIEW CONTROLLER - Creating review for salon: " + salonId);
 
-        Review review = reviewService.createReview(
-                req, user, product);
-        UserDTO reviewer = userService.getUserById(
-                review.getUserId()).getBody();
+        try {
+            // 1. Obtener usuario
+            UserDTO user = userService.getUserFromJwtToken(jwt).getBody();
+            System.out.println("✅ Usuario obtenido: " + user.getId());
 
-        ReviewDTO reviewDTO = ReviewMapper.mapToDTO(review, reviewer);
+            // 2. Obtener salon
+            SalonDTO salon = salonService.getSalonById(salonId, jwt).getBody();
+            System.out.println("✅ Salon obtenido: " + salon.getId());
 
-        return ResponseEntity.ok(reviewDTO);
+            // 3. Crear review
+            Review review = reviewService.createReview(req, user, salon);
+            System.out.println("✅ Review creado: " + review.getId());
 
+            // 4. ✅ SOLUCIÓN: Usar el usuario que ya tenemos, no volver a consultarlo
+            ReviewDTO reviewDTO = ReviewMapper.mapToDTO(review, user); // Solo 2 parámetros
+
+            System.out.println("✅ ReviewDTO creado exitosamente");
+            return ResponseEntity.ok(reviewDTO);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error creando review: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @PatchMapping("/{reviewId}")
